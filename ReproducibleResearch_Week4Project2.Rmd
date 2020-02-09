@@ -1,0 +1,130 @@
+
+
+---
+title: "NOAA Storm Database Analysis"
+author: "Blackcatweb"
+output:
+  html_document: 
+    keep_md: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Synopsis
+
+This project involves exploring the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database to determine across the United States, which types of events (as indicated in the EVTYPE variable) are most harmful with respect to population health, and which types of events have the greatest economic consequences. 
+
+
+## Data Processing
+
+#### Load relevant libraries
+
+```{r}
+library(ggplot2)
+library(dplyr)
+```
+
+#### Loading the data
+
+File was downloaded from  https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2 and unzip into working directory.
+
+```{r}
+data1 <- read.csv("repdata_data_StormData.csv")
+head(data1)
+str(data1)
+summary(data1)
+```
+
+## Results 
+
+#### 1. Across the United States, which types of events (as indicated in the EVTYPE variable) are most harmful with respect to population health?
+
+Population health is affected by the number of injuries and fatalities. The types of events most harmful with respect to population health are reflected below: 
+
+Aggregate data for fatalities by events and list the top 10 events
+```{r}
+fatalities <- aggregate(FATALITIES ~ EVTYPE, data = data1, FUN = sum)
+fatalities <- fatalities[order(fatalities$FATALITIES, decreasing = TRUE), ]
+maxFatal <- fatalities[1:10, ]
+```
+
+Aggregate data for injuries by events and list the top 10 events
+```{r}
+injuries <- aggregate(INJURIES ~ EVTYPE, data = data1, FUN = sum)
+injuries <- injuries[order(injuries$INJURIES, decreasing = TRUE), ]
+maxInjur <- injuries[1:10, ]
+```
+
+Plot of top 10 events which are most harmful with respect to population health
+```{r}
+par(mfrow=c(1,2))
+barplot(maxFatal$FATALITIES, 
+        names.arg = maxFatal$EVTYPE, 
+        las = 3, 
+        main = "Top 10 Event Types \nwith Highest Fatalities", 
+        ylab = "Number of Fatalities")
+barplot(maxInjur$INJURIES, 
+        names.arg = maxInjur$EVTYPE, 
+        las = 3, 
+        main = "Top 10 Event Types \nwith Highest Injuries", 
+        ylab = "Number of Injuries")
+```
+
+#### 2. Across the United States, which types of events have the greatest economic consequences?
+
+Economic consequences is affected by the number of property damage and crop damage. The types of events with greatest economic consequences are reflected below: 
+
+Create a new column to convert property damage and crop damage into numbers  
+
+- H= hundreds
+- K= thousends
+- M= milions
+- B= bilions
+
+```{r}
+data1$PROPDMGNUM = 0
+data1[data1$PROPDMGEXP == "H", ]$PROPDMGNUM = data1[data1$PROPDMGEXP == "H", ]$PROPDMG * 10^2
+data1[data1$PROPDMGEXP == "K", ]$PROPDMGNUM = data1[data1$PROPDMGEXP == "K", ]$PROPDMG * 10^3
+data1[data1$PROPDMGEXP == "M", ]$PROPDMGNUM = data1[data1$PROPDMGEXP == "M", ]$PROPDMG * 10^6
+data1[data1$PROPDMGEXP == "B", ]$PROPDMGNUM = data1[data1$PROPDMGEXP == "B", ]$PROPDMG * 10^9
+
+data1$CROPDMGNUM = 0
+data1[data1$CROPDMGEXP == "H", ]$CROPDMGNUM = data1[data1$CROPDMGEXP == "H", ]$CROPDMG * 10^2
+data1[data1$CROPDMGEXP == "K", ]$CROPDMGNUM = data1[data1$CROPDMGEXP == "K", ]$CROPDMG * 10^3
+data1[data1$CROPDMGEXP == "M", ]$CROPDMGNUM = data1[data1$CROPDMGEXP == "M", ]$CROPDMG * 10^6
+data1[data1$CROPDMGEXP == "B", ]$CROPDMGNUM = data1[data1$CROPDMGEXP == "B", ]$CROPDMG * 10^9
+```
+
+Aggregate data for property damage and list the top 10 events
+```{r}
+PROPDMGNUM2 <- aggregate(PROPDMGNUM ~ EVTYPE, data = data1, FUN = sum)
+PROPDMGNUM2 <- PROPDMGNUM2[order(PROPDMGNUM2$PROPDMGNUM, decreasing = TRUE), ]
+maxPROPDMGNUM2 <- PROPDMGNUM2[1:10, ]
+```
+
+Aggregate data for crop damage and list the top 10 events
+```{r}
+CROPDMGNUM2 <- aggregate(CROPDMGNUM ~ EVTYPE, data = data1, FUN = sum)
+CROPDMGNUM2 <- CROPDMGNUM2[order(CROPDMGNUM2$CROPDMGNUM, decreasing = TRUE), ]
+maxCROPDMGNUM2 <- CROPDMGNUM2[1:10, ]
+```
+
+Plot of top 10 events which have the greatest economic consequences
+```{r}
+par(mfrow=c(1,2))
+barplot(maxPROPDMGNUM2$PROPDMGNUM/1000000, 
+        names.arg = maxPROPDMGNUM2$EVTYPE, 
+        las = 3, 
+        main = "Top 10 Event Types \nwith Highest Property Damage", 
+        ylab = "Total damage (in millions)")
+barplot(maxCROPDMGNUM2$CROPDMGNUM/1000000, 
+        names.arg = maxCROPDMGNUM2$EVTYPE, 
+        las = 3, 
+        main = "Top 10 Event Types \nwith Highest Crop Damage", 
+        ylab = "Total damage (in millions)")
+```
+
+
+
